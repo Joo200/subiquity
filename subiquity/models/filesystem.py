@@ -129,6 +129,10 @@ class RecoveryKeyHandler:
             key_perm=0o600,
         )
 
+    @property
+    def key(self):
+        return self._key
+
 
 def _set_backlinks(obj):
     if obj.id is None:
@@ -1164,10 +1168,10 @@ class DM_Crypt(_Formattable):
         f = tempfile.NamedTemporaryFile(
             prefix="luks-recovery-key-", mode="w", delete=False
         )
-        if self.recovery_key._key is None:
+        if self.recovery_key.key is None:
             self.recovery_key.generate()
 
-        f.write(self.recovery_key._key)
+        f.write(self.recovery_key.key)
         f.close()
         self._recovery_keyfile = f.name
 
@@ -1178,6 +1182,10 @@ class DM_Crypt(_Formattable):
 
     def constructed_device(self):
         return self._constructed_device
+
+    @property
+    def recovery_keyfile(self):
+        return self._recovery_keyfile
 
     @property
     def size(self):
@@ -2330,11 +2338,11 @@ class FilesystemModel:
         for dm_crypt in self.all_dm_crypts():
             if dm_crypt.recovery_key is None:
                 continue
-            if dm_crypt.recovery_key._key is not None:
+            if dm_crypt.recovery_key.key is not None:
                 continue
-            if dm_crypt._recovery_keyfile is not None:
+            if dm_crypt.recovery_keyfile is not None:
                 dm_crypt.recovery_key.load_key_from_file(
-                    pathlib.Path(dm_crypt._recovery_keyfile)
+                    pathlib.Path(dm_crypt.recovery_keyfile)
                 )
             else:
                 dm_crypt.recovery_key.generate()
